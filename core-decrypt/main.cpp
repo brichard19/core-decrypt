@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <iostream>
 #include <cstring>
 #include "core-decrypt.h"
