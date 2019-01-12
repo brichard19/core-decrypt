@@ -49,7 +49,7 @@ def read_encrypted_key(wallet_filename):
 prog = os.path.basename(sys.argv[0])
 
 if len(sys.argv) != 2 or sys.argv[1].startswith("-"):
-    print("usage:", prog, "BITCOINCORE_WALLET_FILE")
+    print("usage: walletinfo.py WALLET_FILE")
     sys.exit(2)
 
 
