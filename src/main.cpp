@@ -260,11 +260,19 @@ int main(int argc, char **argv)
     parse_dictionaries(k, dictionary_files, format);
 
     std::cout << "Loading dictionary... ";
-    PasswordDictionary d(dictionary_files, format);
-    std::cout << "Done" << std::endl;
 
-    std::cout << "Dictionary contains " << d.get_size() << " combinations" << std::endl;
+    try {
+        PasswordDictionary d(dictionary_files, format);
+        std::cout << "Done" << std::endl;
 
-    std::cout << "Selected device: " << devices[selected_device].name << std::endl;
-    dictionary_cl(devices[selected_device], d, ct, iv, salt, iterations, start, 1);
+        std::cout << "Dictionary contains " << d.get_size() << " combinations" << std::endl;
+
+        std::cout << "Selected device: " << devices[selected_device].name << std::endl;
+        dictionary_cl(devices[selected_device], d, ct, iv, salt, iterations, start, 1);
+    } catch(std::string err) {
+        std::cout << "Error: " << err << std::endl;
+        return 1;
+    }
+
+    return 0;
 }

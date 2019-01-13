@@ -28,6 +28,7 @@ void PasswordDictionary::load()
         std::ifstream inFile(_files[i].c_str());
 
         if(!inFile.is_open()) {
+            throw std::string("Unable to open file '" + _files[i] + "' for reading");
             return;
         }
 
