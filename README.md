@@ -1,6 +1,7 @@
 # core-decrypt
 Tool for recovering Bitcoin Core wallet passwords. Requires an OpenCL device.
 
+### Note: Please test against some of the sample wallets to verify the program works properly. Each vendor has a different OpenCL implementation, and I am unable to test all of them
 
 Usage:
 
