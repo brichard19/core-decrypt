@@ -229,7 +229,7 @@ static void find_best_parameters(struct device_info &device, cl_context ctx, cl_
             continue;
         }
 
-        unsigned int t0 = getSystemTime();
+        uint64_t t0 = getSystemTime();
 
         if(clSetKernelArg(kernel, 0, sizeof(cl_mem), &dev_hashes)) {
             clReleaseMemObject(dev_hashes);
@@ -251,7 +251,7 @@ static void find_best_parameters(struct device_info &device, cl_context ctx, cl_
             continue;
         }
 
-        unsigned int t1 = getSystemTime() - t0;
+        uint64_t t1 = getSystemTime() - t0;
         clReleaseMemObject(dev_hashes);
 
         unsigned int speed = (unsigned int)(((double)global_size * iterations) / ((double)t1 / 1000.0));
