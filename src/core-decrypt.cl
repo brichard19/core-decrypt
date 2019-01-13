@@ -791,6 +791,9 @@ void sha512_hash(ulong x[8])
     x[7] = h + _IV[7];
 }
 
+// 111 character is the maximum number of characters that can fit in a single
+// SHA-512 hash block (before padding)
+#define PASSWORD_MAX_LEN 111
 
 struct password_info {
     //struct dictionary dictionaries[8];
@@ -837,6 +840,12 @@ void next_password_dictionary(__global char *dictionary, __global unsigned int *
         unsigned int len = index[s + idx + 1] - start;
 
         for(int j = 0; j < len; j++) {
+
+            if(curr_index + j == PASSWORD_MAX_LEN) {
+                *length = curr_index + j;
+                return;
+            }
+
             password[curr_index + j] = dictionary[start + j];
         }
         curr_index += len;
@@ -862,7 +871,7 @@ __kernel void dictionary_attack(__global char *dictionary, __global unsigned int
     
     int length = 0;
 
-    char password[20] = { 0 };
+    char password[PASSWORD_MAX_LEN] = { 0 };
 
     int idx = get_global_id(0);
 
@@ -912,7 +921,7 @@ __kernel void dictionary_attack(__global char *dictionary, __global unsigned int
 
 __kernel void brute_force_alphabet(__global char *alphabet, int alphabet_size, int password_len, unsigned int iterations, __global unsigned char *salt, ulong start, int stride, __global ulong *state)
 {
-    char password[12] = { 0 };
+    char password[111] = { 0 };
 
     int idx = get_global_id(0);
 

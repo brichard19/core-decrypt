@@ -204,6 +204,69 @@ void initialize_device_dictionaries(cl_context ctx, cl_command_queue cmd, cl_mem
     clCall(clEnqueueWriteBuffer(cmd, *dev_offsets, CL_TRUE, 0, offsets.size() * sizeof(struct password_offset), offsets.data(), 0, NULL, NULL));
 }
 
+static void find_best_parameters(struct device_info &device, cl_context ctx, cl_command_queue cmd, cl_kernel kernel, size_t &global, size_t &local)
+{
+    unsigned int iterations = 2000;
+
+    std::vector<int> local_sizes({ {32, 64, 128, 256, 384, 512, 768, 1024, 1536, 2048}});
+
+    std::vector<unsigned int> speeds;
+
+    unsigned int highest = 0;
+    int highest_idx = 0;
+
+    std::cout << "Finding optimal kernel size for " << device.name << std::endl;
+
+    for(int i = 0; i < local_sizes.size(); i++) {
+        size_t global_size = local_sizes[i] * device.cores;
+        size_t local_size = local_sizes[i];
+
+        int err = 0;
+
+ 
+        cl_mem dev_hashes = clCreateBuffer(ctx, 0, sizeof(uint64_t) * 8 * global, NULL, &err);
+        if(err) {
+            continue;
+        }
+
+        uint64_t t0 = getSystemTime();
+
+        if(clSetKernelArg(kernel, 0, sizeof(cl_mem), &dev_hashes)) {
+            clReleaseMemObject(dev_hashes);
+            continue;
+        }
+        
+        if(clSetKernelArg(kernel, 1, sizeof(unsigned int), &iterations)) {
+            clReleaseMemObject(dev_hashes);
+            continue;
+        }
+
+        if(clEnqueueNDRangeKernel(cmd, kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL)) {
+            clReleaseMemObject(dev_hashes);
+            continue;
+        }
+
+        if(clFinish(cmd)) {
+            clReleaseMemObject(dev_hashes);
+            continue;
+        }
+
+        uint64_t t1 = getSystemTime() - t0;
+        clReleaseMemObject(dev_hashes);
+
+        unsigned int speed = (unsigned int)(((double)global_size * iterations) / ((double)t1 / 1000.0));
+
+        speeds.push_back(speed);
+
+        if(speed > highest) {
+            highest = speed;
+            highest_idx = i;
+        }
+    }
+
+    local = local_sizes[highest_idx];
+    global = local * device.cores;
+}
 
 static void do_dictionary(struct device_info &device, PasswordDictionary &dictionary, unsigned int encrypted_block[4], unsigned int iv[4], unsigned char salt[8], unsigned int iterations, uint64_t start, int stride, unsigned int intensity)
 {
@@ -267,6 +330,7 @@ static void do_dictionary(struct device_info &device, PasswordDictionary &dictio
     size_t global = device.cores * 1024;
     size_t local = 64;
 
+    find_best_parameters(device, ctx, cmd, middle_kernel, global, local);
 
     initialize_device_dictionaries(ctx, cmd, &dev_words, &dev_index, &dev_offsets, &num_words, dictionary);
 
